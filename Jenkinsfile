@@ -28,8 +28,8 @@ pipeline {
 
         stage('Login to Docker Hub') {
             steps {
-                withCredentials([string(credentialsId: 'password-of-docker', variable: 'DOCKER_PASS')]) {
-                    bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USERNAME% --password-stdin"
+                withCredentials([string(credentialsId: 'dockerpass', variable: 'DOCKERPASS')]) {
+                    bat "echo %DOCKERPASS% | docker login -u %DOCKER_USERNAME% --password-stdin"
                 }            
             }
         }
