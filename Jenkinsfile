@@ -1,40 +1,53 @@
 pipeline {
-  agent any   // This means Jenkins can run the pipeline on any available agent (machine)
-
-  stages {
-    stage('Build Docker Images') {
-      steps {
-        // Build all services defined in docker-compose.yml
-        sh 'docker-compose build'
-      }
+    agent any 
+ 
+    environment {
+        DOCKER_USERNAME = 'itsnotdocker'
+        BACKEND_IMAGE = 'itsnotdocker/devops_practice_backend'
+        FRONTEND_IMAGE = 'itsnotdocker/devops_practice_frontend'
+        TAG = "${BUILD_NUMBER}"
     }
 
-    stage('Login to Docker Hub') {
-      steps {
-        // Use Jenkins stored credentials (ID = dockerhub-creds)
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                                          usernameVariable: 'USER',
-                                          passwordVariable: 'PASS')]) {
-          // Log in to Docker Hub using those credentials
-          sh 'echo $PASS | docker login -u $USER --password-stdin'
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/devops-cloud-space/first-devops-project'
+            }
         }
-      }
+
+        stage('Build Docker Images') {
+            steps {
+                bat "docker build -t %BACKEND_IMAGE%:%TAG% ./backend"
+                bat "docker build -t %FRONTEND_IMAGE%:%TAG% ./frontend"
+
+                bat "docker tag %BACKEND_IMAGE%:%TAG% %BACKEND_IMAGE%:latest"
+                bat "docker tag %FRONTEND_IMAGE%:%TAG% %FRONTEND_IMAGE%:latest"
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([string(credentialsId: 'password-of-docker', variable: 'DOCKER_PASS')]) {
+                    bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USERNAME% --password-stdin"
+                }            
+            }
+        }
+
+        stage('Push Docker Images') {
+            steps {
+                bat "docker push %BACKEND_IMAGE%:%TAG%"
+                bat "docker push %FRONTEND_IMAGE%:%TAG%"
+                bat "docker push %BACKEND_IMAGE%:latest"
+                bat "docker push %FRONTEND_IMAGE%:latest"
+            }
+        }
     }
 
-    stage('Tag Images') {
-      steps {
-        // Tag the images with your Docker Hub username
-        sh 'docker tag frontend:latest your-dockerhub-username/frontend:latest'
-        sh 'docker tag backend:latest your-dockerhub-username/backend:latest'
-      }
+    post {
+        always {
+            bat "docker logout"
+            bat "docker system prune -f"
+        }
     }
-
-    stage('Push Images') {
-      steps {
-        // Push the tagged images to Docker Hub
-        sh 'docker push your-dockerhub-username/frontend:latest'
-        sh 'docker push your-dockerhub-username/backend:latest'
-      }
-    }
-  }
 }
