@@ -14,7 +14,7 @@ function App() {
 
   return (
     <div style={{ padding: "50px" }}>
-      <h1>Mini DevOps App 🚀</h1>
+      <h1>🚀 Mini DevOps App 🚀</h1>
 
       <input
         type="text"
