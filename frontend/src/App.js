@@ -13,7 +13,7 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "1000px" }}>
+    <div style={{ padding: "20px" }}>
       <h1>🚀 Mini DevOps App 🚀</h1>
 
       <input
